@@ -1,6 +1,6 @@
 FROM alpine:latest
 
-ARG KCPTUBE_VERSION="0.5.6"
+ARG KCPTUBE_VERSION="0.6.0"
 ARG KCPTUBE_URL="https://github.com/cnbatch/kcptube/releases/download/v${KCPTUBE_VERSION}/kcptube-linux-musl-x64.tar.bz2"
 
 RUN set -ex && \
