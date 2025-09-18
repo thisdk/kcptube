@@ -17,6 +17,8 @@ KCPTube 是一个基于 KCP 协议的网络代理工具，用于优化 UDP 连�
 
 ## 快速开始
 
+详细部署指南请参考 [DEPLOYMENT.md](DEPLOYMENT.md)
+
 ### 拉取镜像
 
 ```bash
@@ -179,6 +181,22 @@ docker run -d \
 
 ## 故障排查
 
+使用提供的故障排查脚本：
+
+```bash
+# 下载并运行故障排查脚本
+curl -sSL https://raw.githubusercontent.com/thisdk/kcptube/main/troubleshoot.sh | bash
+```
+
+或者：
+
+```bash
+# 下载脚本
+wget https://raw.githubusercontent.com/thisdk/kcptube/main/troubleshoot.sh
+chmod +x troubleshoot.sh
+./troubleshoot.sh
+```
+
 ### 查看日志
 
 ```bash
@@ -216,6 +234,34 @@ git clone https://github.com/thisdk/kcptube.git
 cd kcptube
 docker build -t my-kcptube .
 ```
+
+### 本地测试脚本
+
+可以使用提供的测试脚本来验证构建：
+
+```bash
+./test-build.sh
+```
+
+该脚本会自动构建镜像并运行基本测试。
+
+## 技术细节
+
+### 构建流程
+
+1. **多阶段构建**: 使用 Alpine Linux 作为构建环境，分离构建和运行时环境
+2. **依赖管理**: 自动安装 KCPTube 所需的运行时依赖
+3. **安全性**: 使用非特权用户运行容器
+4. **多架构支持**: 支持 AMD64 和 ARM64 架构
+
+### 自动化构建
+
+GitHub Actions 会在以下情况自动构建并推送镜像：
+- 推送到 `main` 或 `master` 分支
+- 创建新的标签（版本发布）
+- 手动触发构建
+
+构建的镜像会自动推送到 GitHub Container Registry：`ghcr.io/thisdk/kcptube`
 
 ## 许可证
 
