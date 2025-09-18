@@ -60,7 +60,8 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix={{branch}}-,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,enable=${{ github.event_name == 'pull_request' }}
 
       - name: Build and push Docker image
         id: build
