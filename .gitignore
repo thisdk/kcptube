@@ -45,3 +45,9 @@ venv/
 # Local config files
 local.conf
 *.local.conf
+
+# Test and build artifacts
+*-old.*
+*_test_*
+test-config.conf
+*.test.*
