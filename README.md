@@ -255,7 +255,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t my-kcptube .
 
 ### 构建流程
 
-1. **多阶段构建**: 使用 Alpine Linux 3.20 作为构建环境，分离构建和运行时环境
+1. **多阶段构建**: 使用 Alpine Linux latest 作为构建环境，分离构建和运行时环境
 2. **依赖管理**: 自动安装 KCPTube 所需的运行时依赖，支持多镜像源
 3. **安全性**: 使用非特权用户运行容器
 4. **多架构支持**: 支持 AMD64 和 ARM64 架构
