@@ -2,8 +2,13 @@ name: 🚀 KCPTube 多架构 Docker 镜像构建
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       force_rebuild:
