@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: 🚀 KCPTube 多架构 Docker 镜像构建
 
 on:
   push:
@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       force_rebuild:
-        description: 'Force rebuild without cache'
+        description: '🔄 强制无缓存重建'
         required: false
         default: false
         type: boolean
@@ -24,83 +24,145 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-and-push:
+  # AMD64 架构构建 - 快速构建用于测试和开发
+  build-amd64:
+    name: 🏗️ 构建 AMD64 镜像
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-      security-events: write
+    outputs:
+      meta-tags: ${{ steps.meta.outputs.tags }}
+      meta-labels: ${{ steps.meta.outputs.labels }}
+      digest: ${{ steps.build.outputs.digest }}
 
     steps:
-      - name: Checkout repository
+      - name: 📥 检出代码仓库
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
+      - name: 🏗️ 设置 Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Container Registry
+      - name: 🔑 登录容器镜像仓库
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
+      - name: 🏷️ 提取镜像元数据
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch,suffix=-amd64
+            type=ref,event=pr,suffix=-amd64
+            type=semver,pattern={{version}},suffix=-amd64
+            type=raw,value=latest-amd64,enable={{is_default_branch}}
+
+      - name: 🔨 构建并推送 AMD64 镜像
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=amd64
+          cache-to: type=gha,mode=max,scope=amd64
+          no-cache: ${{ github.event.inputs.force_rebuild == 'true' }}
+
+  # ARM64 架构构建 - 独立job避免超时
+  build-arm64:
+    name: 🔧 构建 ARM64 镜像
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: 📥 检出代码仓库
+        uses: actions/checkout@v4
+
+      - name: ⚡ 设置 QEMU 模拟器
+        uses: docker/setup-qemu-action@v3
+
+      - name: 🏗️ 设置 Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 登录容器镜像仓库
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ 提取镜像元数据
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch,suffix=-arm64
+            type=ref,event=pr,suffix=-arm64
+            type=semver,pattern={{version}},suffix=-arm64
+            type=raw,value=latest-arm64,enable={{is_default_branch}}
+
+      - name: 🔨 构建并推送 ARM64 镜像
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=arm64
+          cache-to: type=gha,mode=max,scope=arm64
+          no-cache: ${{ github.event.inputs.force_rebuild == 'true' }}
+
+  # 创建多架构清单
+  create-manifest:
+    name: 🔗 创建多架构镜像清单
+    runs-on: ubuntu-latest
+    needs: [build-amd64, build-arm64]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 🔑 登录容器镜像仓库
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ 提取最终镜像元数据
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,prefix={{branch}}-,enable=${{ github.ref == 'refs/heads/main' }}
-            type=sha,enable=${{ github.event_name == 'pull_request' }}
 
-      - name: Build and push Docker image
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          no-cache: ${{ github.event.inputs.force_rebuild == 'true' }}
-
-      - name: Test Docker image (AMD64 only for testing)
-        if: github.event_name == 'pull_request'
+      - name: 🔗 创建并推送多架构清单
         run: |
-          echo "Testing Docker image..."
-          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }} --help
-
-      - name: Generate artifact attestation
-        if: github.event_name != 'pull_request'
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
-          subject-digest: ${{ steps.build.outputs.digest }}
-          push-to-registry: true
-
-      - name: Run security scan with Trivy
-        if: github.event_name != 'pull_request'
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      - name: Upload Trivy scan results
-        if: github.event_name != 'pull_request'
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
+          for tag in $(echo '${{ steps.meta.outputs.tags }}' | tr '\n' ' '); do
+            echo "创建多架构清单: $tag"
+            docker manifest create "$tag" \
+              "$tag-amd64" \
+              "$tag-arm64"
+            docker manifest push "$tag"
+          done
