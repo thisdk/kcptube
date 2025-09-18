@@ -1,7 +1,9 @@
 # KCPTube Docker 镜像
 
 [![Docker Build](https://github.com/thisdk/kcptube/actions/workflows/docker-build.yml/badge.svg)](https://github.com/thisdk/kcptube/actions/workflows/docker-build.yml)
-[![Docker Image Size](https://img.shields.io/docker/image-size/ghcr.io/thisdk/kcptube/latest)](https://github.com/thisdk/kcptube/pkgs/container/kcptube)
+[![Docker Image Size](https://img.shields.io/docker/image-size/ghcr.io/thisdk/kcptube/latest?logo=docker&logoColor=white)](https://github.com/thisdk/kcptube/pkgs/container/kcptube)
+[![License](https://img.shields.io/github/license/thisdk/kcptube?logo=apache&logoColor=white)](https://github.com/thisdk/kcptube/blob/main/LICENSE)
+[![KCPTube Version](https://img.shields.io/badge/based_on-cnbatch/kcptube-blue?logo=github&logoColor=white)](https://github.com/cnbatch/kcptube)
 
 这个仓库用于编译 [cnbatch/kcptube](https://github.com/cnbatch/kcptube) 为 Docker 镜像并发布到 GitHub Container Registry。
 
@@ -42,6 +44,8 @@ destination_address=123.45.67.89
 encryption_password=qwerty1234
 encryption_algorithm=AES-GCM
 ```
+
+**注意**: 所有参数都必须通过配置文件指定，kcptube 不支持通过环境变量进行配置。
 
 2. **运行容器**
 
@@ -132,12 +136,15 @@ KCPTube 支持丰富的配置选项，以下是主要参数：
 | `listen_port` | 监听端口 | `3000` 或 `3000-4000` |
 | `destination_address` | 目标地址 | IP 地址或域名 |
 | `destination_port` | 目标端口 | `3000` 或 `3000-4000` |
+| `listen_on` | 监听地址 | IP 地址或域名（可选）|
+| `dport_refresh` | 端口刷新间隔 | 秒数，默认 60 |
+| `udp_timeout` | UDP 超时时间 | 秒数，默认 180 |
 
 ### KCP 参数
 
 | 参数名 | 说明 | 可选值 |
 |-------|------|--------|
-| `kcp` | KCP 模式 | `fast1-6`、`regular1-5`、`manual` |
+| `kcp` | KCP 模式 | `fast1`、`fast2`、`fast3`、`fast4`、`fast5`、`fast6`、`regular1`、`regular2`、`regular3`、`regular4`、`regular5`、`manual` |
 | `kcp_mtu` | MTU 大小 | 默认 1440 |
 | `inbound_bandwidth` | 入站带宽 | 如 `100M`、`1G` |
 | `outbound_bandwidth` | 出站带宽 | 如 `50M`、`500M` |
@@ -146,33 +153,19 @@ KCPTube 支持丰富的配置选项，以下是主要参数：
 
 | 参数名 | 说明 | 可选值 |
 |-------|------|--------|
-| `encryption_algorithm` | 加密算法 | `AES-GCM`、`chacha20`、`none` |
+| `encryption_algorithm` | 加密算法 | `XOR`、`AES-GCM`、`AES-OCB`、`chacha20`、`xchacha20`、`none` |
 | `encryption_password` | 加密密码 | 任意字符串 |
 
 更多配置选项请参考 [原项目文档](https://github.com/cnbatch/kcptube/wiki)。
 
-## 环境变量
 
-容器还支持通过环境变量进行配置：
-
-```bash
-docker run -d \
-  --name kcptube \
-  -p 59000:59000/udp \
-  -e KCPTUBE_MODE=client \
-  -e KCPTUBE_LISTEN_PORT=59000 \
-  -e KCPTUBE_DEST_ADDR=123.45.67.89 \
-  -e KCPTUBE_DEST_PORT=3000 \
-  ghcr.io/thisdk/kcptube:latest
-```
 
 ## 镜像标签
 
 | 标签 | 说明 |
 |------|------|
 | `latest` | 最新版本，基于 main 分支构建 |
-| `v1.0.0` | 特定版本标签 |
-| `main-<sha>` | 基于特定提交构建 |
+| `main-<sha>` | 基于特定提交构建的版本 |
 
 ## 支持的架构
 
