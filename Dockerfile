@@ -1,5 +1,5 @@
 # Multi-stage build for kcptube
-FROM alpine:3.22 AS builder
+FROM alpine:3.20 AS builder
 
 # Install essential build dependencies including Python for Botan
 RUN apk add --no-cache \
@@ -39,7 +39,7 @@ RUN mkdir build && \
     ldd kcptube || true
 
 # Runtime stage
-FROM alpine:3.22
+FROM alpine:3.20
 
 # Install minimal runtime dependencies
 RUN apk add --no-cache \
