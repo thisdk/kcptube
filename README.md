@@ -259,10 +259,10 @@ docker buildx build --platform linux/amd64,linux/arm64 -t my-kcptube .
 
 项目使用 GitHub Actions 进行多架构自动构建：
 
-- **AMD64 构建**: 快速构建，用于开发和测试
-- **ARM64 构建**: 独立 job，避免超时问题
-- **多架构清单**: 自动创建支持两种架构的统一镜像标签
-- **缓存优化**: 每个架构独立缓存，提高构建效率
+- **统一多架构构建**: 使用 Docker buildx 在单个 job 中构建 AMD64 和 ARM64
+- **自动架构检测**: 用户拉取镜像时自动获取匹配的 CPU 架构版本  
+- **智能缓存策略**: 跨架构共享构建缓存，提高构建效率
+- **PR 优化构建**: Pull Request 仅构建 AMD64 以加快反馈速度
 
 GitHub Actions 会在以下情况自动构建并推送镜像：
 - 推送到 `main` 或 `master` 分支
