@@ -15,10 +15,6 @@ KCPTube 是一个基于 KCP 协议的网络代理工具，用于优化 UDP 连�
 - 支持 STUN 打洞
 - 多种工作模式（客户端、服务端、中继节点）
 
-## 快速开始
-
-详细部署指南请参考 [DEPLOYMENT.md](DEPLOYMENT.md)
-
 ### 拉取镜像
 
 ```bash
