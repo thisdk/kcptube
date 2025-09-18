@@ -181,22 +181,6 @@ docker run -d \
 
 ## 故障排查
 
-使用提供的故障排查脚本：
-
-```bash
-# 下载并运行故障排查脚本
-curl -sSL https://raw.githubusercontent.com/thisdk/kcptube/main/troubleshoot.sh | bash
-```
-
-或者：
-
-```bash
-# 下载脚本
-wget https://raw.githubusercontent.com/thisdk/kcptube/main/troubleshoot.sh
-chmod +x troubleshoot.sh
-./troubleshoot.sh
-```
-
 ### 查看日志
 
 ```bash
@@ -227,7 +211,7 @@ docker run --rm \
 
 ## 构建镜像
 
-如需自行构建镜像，有多种构建选项可用：
+如需自行构建镜像，使用简化的构建脚本：
 
 ### 快速构建
 
@@ -235,16 +219,13 @@ docker run --rm \
 git clone https://github.com/thisdk/kcptube.git
 cd kcptube
 
-# 使用改进的构建脚本（推荐）
+# 使用构建脚本
 ./build.sh
-
-# 或使用传统方式
-./test-build.sh
 ```
 
 ### 构建选项
 
-新的构建系统提供多种策略：
+构建系统提供多种策略：
 
 ```bash
 # 快速构建（使用缓存）
@@ -260,30 +241,15 @@ BUILD_STRATEGY=debug ./build.sh
 NO_CACHE=true ./build.sh
 ```
 
-### 构建前验证
-
-运行构建环境验证以确保构建成功：
+### 直接使用 Docker
 
 ```bash
-./validate-build.sh
+# 单架构构建
+docker build -t my-kcptube .
+
+# 多架构构建（需要 buildx）
+docker buildx build --platform linux/amd64,linux/arm64 -t my-kcptube .
 ```
-
-该脚本将检查：
-- Docker 安装和状态
-- 网络连接
-- 包仓库可用性
-- 磁盘空间
-- Git 仓库访问
-
-### 本地测试脚本
-
-构建完成后，可以使用测试脚本验证镜像：
-
-```bash
-./test-build.sh
-```
-
-该脚本会自动构建镜像并运行全面测试。
 
 ## 技术细节
 
@@ -297,6 +263,13 @@ NO_CACHE=true ./build.sh
 6. **错误处理**: 改进的构建错误处理和诊断
 
 ### 自动化构建
+
+项目使用 GitHub Actions 进行多架构自动构建：
+
+- **AMD64 构建**: 快速构建，用于开发和测试
+- **ARM64 构建**: 独立 job，避免超时问题
+- **多架构清单**: 自动创建支持两种架构的统一镜像标签
+- **缓存优化**: 每个架构独立缓存，提高构建效率
 
 GitHub Actions 会在以下情况自动构建并推送镜像：
 - 推送到 `main` 或 `master` 分支

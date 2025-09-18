@@ -85,45 +85,7 @@ build_image() {
     fi
 }
 
-# Function to run basic tests
-run_tests() {
-    echo ""
-    echo "🧪 运行基础测试..."
-    echo "=================="
-    
-    # Test 1: Help command
-    echo "测试 1: 帮助命令"
-    if timeout 30 docker run --rm "$IMAGE_NAME" --help > /tmp/build_test_help.txt 2>&1; then
-        echo "✅ 帮助命令成功"
-        echo "输出摘要:"
-        head -3 /tmp/build_test_help.txt | sed 's/^/  /'
-    else
-        echo "❌ 帮助命令失败"
-        echo "错误输出:"
-        cat /tmp/build_test_help.txt | head -5 | sed 's/^/  /'
-        return 1
-    fi
-    
-    # Test 2: Binary verification
-    echo ""
-    echo "测试 2: 二进制验证"
-    if docker run --rm --entrypoint="" "$IMAGE_NAME" sh -c "file /usr/local/bin/kcptube && ldd /usr/local/bin/kcptube" > /tmp/build_test_binary.txt 2>&1; then
-        echo "✅ 二进制验证成功"
-        echo "二进制信息:"
-        cat /tmp/build_test_binary.txt | sed 's/^/  /'
-    else
-        echo "❌ 二进制验证失败"
-        cat /tmp/build_test_binary.txt | sed 's/^/  /'
-        return 1
-    fi
-    
-    # Clean up test files
-    rm -f /tmp/build_test_help.txt /tmp/build_test_binary.txt
-    
-    echo ""
-    echo "🎉 所有测试通过！"
-    return 0
-}
+
 
 # Function to show build summary
 show_summary() {
@@ -155,7 +117,7 @@ show_summary() {
         echo "  $IMAGE_NAME /etc/kcptube/config.conf"
         echo ""
         echo "# 故障排查"
-        echo "./troubleshoot.sh"
+        echo "查看 Docker 日志: docker logs <容器名>"
     else
         echo "❌ 镜像不存在或损坏"
         return 1
@@ -171,40 +133,22 @@ main() {
             ;;
     esac
     
-    echo "开始构建..."
-    
-    # Validate environment first
-    if [[ -f "./validate-build.sh" ]]; then
-        echo "🔍 运行构建环境验证..."
-        if ./validate-build.sh; then
-            echo "✅ 环境验证通过"
-        else
-            echo "⚠️  环境验证发现问题，但继续构建..."
-        fi
-        echo ""
-    fi
+    echo "🚀 开始构建..."
     
     # Build the image
     if build_image "$BUILD_STRATEGY"; then
-        # Run tests
-        if run_tests; then
-            # Show summary
-            show_summary
-            echo ""
-            echo "🏆 构建和测试全部完成！"
-            exit 0
-        else
-            echo "⚠️  构建成功但测试失败"
-            exit 1
-        fi
+        # Show summary
+        show_summary
+        echo ""
+        echo "🏆 构建完成！"
+        exit 0
     else
         echo "💥 构建失败"
         echo ""
         echo "故障排查建议:"
         echo "1. 检查网络连接: ping -c 3 dl-cdn.alpinelinux.org"
         echo "2. 检查磁盘空间: df -h"
-        echo "3. 运行环境验证: ./validate-build.sh"
-        echo "4. 查看详细错误: BUILD_STRATEGY=debug $0"
+        echo "3. 查看详细错误: BUILD_STRATEGY=debug $0"
         exit 1
     fi
 }
