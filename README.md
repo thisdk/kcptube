@@ -45,6 +45,8 @@ encryption_password=qwerty1234
 encryption_algorithm=AES-GCM
 ```
 
+**注意**: 所有参数都必须通过配置文件指定，kcptube 不支持通过环境变量进行配置。
+
 2. **运行容器**
 
 ```bash
