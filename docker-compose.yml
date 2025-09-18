@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  kcptube-client:
+    image: ghcr.io/thisdk/kcptube:latest
+    container_name: kcptube-client
+    ports:
+      - "59000:59000/udp"
+    volumes:
+      - ./client.conf:/etc/kcptube/config.conf:ro
+    command: ["/etc/kcptube/config.conf"]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  kcptube-server:
+    image: ghcr.io/thisdk/kcptube:latest
+    container_name: kcptube-server
+    ports:
+      - "3000-4000:3000-4000/udp"
+    volumes:
+      - ./server.conf:/etc/kcptube/config.conf:ro
+      - ./logs:/var/log/kcptube
+    command: ["/etc/kcptube/config.conf"]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  default:
+    driver: bridge
