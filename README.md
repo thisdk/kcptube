@@ -227,41 +227,90 @@ docker run --rm \
 
 ## 构建镜像
 
-如需自行构建镜像：
+如需自行构建镜像，有多种构建选项可用：
+
+### 快速构建
 
 ```bash
 git clone https://github.com/thisdk/kcptube.git
 cd kcptube
-docker build -t my-kcptube .
+
+# 使用改进的构建脚本（推荐）
+./build.sh
+
+# 或使用传统方式
+./test-build.sh
 ```
+
+### 构建选项
+
+新的构建系统提供多种策略：
+
+```bash
+# 快速构建（使用缓存）
+BUILD_STRATEGY=fast ./build.sh
+
+# 安全构建（无缓存，详细输出）
+BUILD_STRATEGY=safe ./build.sh
+
+# 调试构建（最详细输出）
+BUILD_STRATEGY=debug ./build.sh
+
+# 完全重新构建
+NO_CACHE=true ./build.sh
+```
+
+### 构建前验证
+
+运行构建环境验证以确保构建成功：
+
+```bash
+./validate-build.sh
+```
+
+该脚本将检查：
+- Docker 安装和状态
+- 网络连接
+- 包仓库可用性
+- 磁盘空间
+- Git 仓库访问
 
 ### 本地测试脚本
 
-可以使用提供的测试脚本来验证构建：
+构建完成后，可以使用测试脚本验证镜像：
 
 ```bash
 ./test-build.sh
 ```
 
-该脚本会自动构建镜像并运行基本测试。
+该脚本会自动构建镜像并运行全面测试。
 
 ## 技术细节
 
 ### 构建流程
 
-1. **多阶段构建**: 使用 Alpine Linux 作为构建环境，分离构建和运行时环境
-2. **依赖管理**: 自动安装 KCPTube 所需的运行时依赖
+1. **多阶段构建**: 使用 Alpine Linux 3.20 作为构建环境，分离构建和运行时环境
+2. **依赖管理**: 自动安装 KCPTube 所需的运行时依赖，支持多镜像源
 3. **安全性**: 使用非特权用户运行容器
 4. **多架构支持**: 支持 AMD64 和 ARM64 架构
+5. **构建优化**: 包含 .dockerignore 和构建缓存优化
+6. **错误处理**: 改进的构建错误处理和诊断
 
 ### 自动化构建
 
 GitHub Actions 会在以下情况自动构建并推送镜像：
 - 推送到 `main` 或 `master` 分支
 - 创建新的标签（版本发布）
-- 手动触发构建
+- 提交 Pull Request（仅构建测试，不推送）
+- 手动触发构建（支持强制重新构建选项）
 
 构建的镜像会自动推送到 GitHub Container Registry：`ghcr.io/thisdk/kcptube`
+
+新版本包含以下改进：
+- 安全扫描和漏洞检测
+- 构建证明和供应链安全
+- 改进的错误处理和重试机制
+- Pull Request 构建测试
 
 ## 许可证
 

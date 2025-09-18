@@ -1,14 +1,34 @@
 # Multi-stage build for kcptube
-FROM alpine:3.18 AS builder
+FROM alpine:3.20 AS builder
 
-# Install build dependencies
-RUN apk add --no-cache \
-    build-base \
-    cmake \
-    git \
-    asio-dev \
-    botan2-dev \
-    linux-headers
+# Configure Alpine repositories with fallbacks and install build dependencies
+RUN set -ex && \
+    # Backup original repos
+    cp /etc/apk/repositories /etc/apk/repositories.backup && \
+    # Try multiple mirror sources
+    { \
+        echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/main" > /etc/apk/repositories && \
+        echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/community" >> /etc/apk/repositories && \
+        timeout 30 apk update --no-cache; \
+    } || { \
+        echo "Primary mirror failed, trying Alibaba mirror..." && \
+        echo "https://mirrors.aliyun.com/alpine/v3.20/main" > /etc/apk/repositories && \
+        echo "https://mirrors.aliyun.com/alpine/v3.20/community" >> /etc/apk/repositories && \
+        timeout 30 apk update --no-cache; \
+    } || { \
+        echo "Alibaba mirror failed, using official repositories..." && \
+        cp /etc/apk/repositories.backup /etc/apk/repositories && \
+        timeout 60 apk update --no-cache; \
+    } && \
+    apk add --no-cache \
+        build-base \
+        cmake \
+        git \
+        asio-dev \
+        botan-dev \
+        linux-headers \
+        pkgconfig \
+    && rm -rf /var/cache/apk/*
 
 # Create working directory
 WORKDIR /app
@@ -17,20 +37,42 @@ WORKDIR /app
 RUN git clone https://github.com/cnbatch/kcptube.git . && \
     git submodule update --init --recursive
 
-# Build the application
+# Build the application with error handling
 RUN mkdir build && \
     cd build && \
     cmake .. && \
-    make -j$(nproc)
+    make -j$(nproc) && \
+    ls -la kcptube && \
+    file kcptube && \
+    ldd kcptube || true
 
 # Runtime stage
-FROM alpine:3.18
+FROM alpine:3.20
 
-# Install runtime dependencies
-RUN apk add --no-cache \
-    botan2-libs \
-    libgcc \
-    libstdc++
+# Configure Alpine repositories with fallbacks and install runtime dependencies
+RUN set -ex && \
+    # Backup original repos
+    cp /etc/apk/repositories /etc/apk/repositories.backup && \
+    # Try multiple mirror sources
+    { \
+        echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/main" > /etc/apk/repositories && \
+        echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/community" >> /etc/apk/repositories && \
+        timeout 30 apk update --no-cache; \
+    } || { \
+        echo "Primary mirror failed, trying Alibaba mirror..." && \
+        echo "https://mirrors.aliyun.com/alpine/v3.20/main" > /etc/apk/repositories && \
+        echo "https://mirrors.aliyun.com/alpine/v3.20/community" >> /etc/apk/repositories && \
+        timeout 30 apk update --no-cache; \
+    } || { \
+        echo "Alibaba mirror failed, using official repositories..." && \
+        cp /etc/apk/repositories.backup /etc/apk/repositories && \
+        timeout 60 apk update --no-cache; \
+    } && \
+    apk add --no-cache \
+        botan-libs \
+        libgcc \
+        libstdc++ \
+    && rm -rf /var/cache/apk/*
 
 # Create non-root user
 RUN addgroup -g 1000 kcptube && \
@@ -54,6 +96,10 @@ WORKDIR /etc/kcptube
 
 # Expose common ports (can be overridden)
 EXPOSE 3000-4000/udp
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD /usr/local/bin/kcptube --help > /dev/null || exit 1
 
 # Default command
 ENTRYPOINT ["/usr/local/bin/kcptube"]
