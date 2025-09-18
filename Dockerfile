@@ -1,14 +1,20 @@
 # Multi-stage build for kcptube
-FROM alpine:3.18 AS builder
+FROM alpine:3.20 AS builder
 
-# Install build dependencies
-RUN apk add --no-cache \
-    build-base \
-    cmake \
-    git \
-    asio-dev \
-    botan2-dev \
-    linux-headers
+# Configure Alpine repositories and install build dependencies
+RUN echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/main" > /etc/apk/repositories && \
+    echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/community" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/main" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repositories && \
+    apk update --no-cache && \
+    apk add --no-cache \
+        build-base \
+        cmake \
+        git \
+        asio-dev \
+        botan-dev \
+        linux-headers \
+        pkgconfig
 
 # Create working directory
 WORKDIR /app
@@ -17,20 +23,28 @@ WORKDIR /app
 RUN git clone https://github.com/cnbatch/kcptube.git . && \
     git submodule update --init --recursive
 
-# Build the application
+# Build the application with error handling
 RUN mkdir build && \
     cd build && \
     cmake .. && \
-    make -j$(nproc)
+    make -j$(nproc) && \
+    ls -la kcptube && \
+    file kcptube && \
+    ldd kcptube || true
 
 # Runtime stage
-FROM alpine:3.18
+FROM alpine:3.20
 
-# Install runtime dependencies
-RUN apk add --no-cache \
-    botan2-libs \
-    libgcc \
-    libstdc++
+# Configure Alpine repositories and install runtime dependencies
+RUN echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/main" > /etc/apk/repositories && \
+    echo "https://mirrors.tuna.tsinghua.edu.cn/alpine/v3.20/community" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/main" >> /etc/apk/repositories && \
+    echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repositories && \
+    apk update --no-cache && \
+    apk add --no-cache \
+        botan-libs \
+        libgcc \
+        libstdc++
 
 # Create non-root user
 RUN addgroup -g 1000 kcptube && \
