@@ -2,18 +2,16 @@
 FROM alpine:3.20 AS builder
 
 # Install essential build dependencies and Botan 3 packages
-RUN apk add --no-cache git build-base cmake asio-dev botan3-libs \
-    && rm -rf /var/cache/apk/*
+RUN apk add --no-cache git build-base cmake asio-dev botan3-libs && rm -rf /var/cache/apk/*
 
 # Create working directory
 WORKDIR /app
 
 # Clone the original kcptube source code
-RUN git clone https://github.com/cnbatch/kcptube.git
+RUN git clone https://github.com/cnbatch/kcptube.git .
 
 # Build the application with dynamic Botan linking
-RUN mkdir build && cd build && cmake .. && make -j$(nproc) && \
-    ls -la kcptube && file kcptube && ldd kcptube || true
+RUN mkdir build && cd build && cmake .. && make -j$(nproc) && ls -la kcptube && file kcptube && ldd kcptube || true
 
 # Runtime stage
 FROM alpine:3.20
@@ -44,4 +42,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 CMD /usr
 
 # Default command
 ENTRYPOINT ["/usr/local/bin/kcptube"]
+
 CMD ["--help"]
