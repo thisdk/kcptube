@@ -165,8 +165,13 @@ KCPTube 支持丰富的配置选项，以下是主要参数：
 
 ## 支持的架构
 
-- `linux/amd64`
-- `linux/arm64`
+- `linux/amd64` (x86_64)
+- `linux/arm64` (aarch64)
+- `linux/arm/v7` (armv7)
+- `linux/arm/v6` (armhf)
+- `linux/ppc64le`
+- `linux/s390x`
+- `linux/riscv64`
 
 ## 故障排查
 
@@ -228,6 +233,12 @@ BUILD_STRATEGY=debug ./build.sh
 
 # 完全重新构建
 NO_CACHE=true ./build.sh
+
+# 多架构构建（构建所有支持的架构）
+MULTIARCH=true ./build.sh
+
+# 自定义平台多架构构建
+MULTIARCH=true PLATFORMS=linux/amd64,linux/arm64 ./build.sh
 ```
 
 ### 直接使用 Docker
@@ -237,7 +248,7 @@ NO_CACHE=true ./build.sh
 docker build -t my-kcptube .
 
 # 多架构构建（需要 buildx）
-docker buildx build --platform linux/amd64,linux/arm64 -t my-kcptube .
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/ppc64le,linux/s390x,linux/riscv64 -t my-kcptube .
 ```
 
 ## 技术细节
@@ -247,7 +258,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t my-kcptube .
 1. **多阶段构建**: 使用 Alpine Linux latest 作为构建环境，分离构建和运行时环境
 2. **依赖管理**: 自动安装 KCPTube 所需的运行时依赖，支持多镜像源
 3. **安全性**: 使用非特权用户运行容器
-4. **多架构支持**: 支持 AMD64 和 ARM64 架构
+4. **多架构支持**: 支持 AMD64、ARM64、ARMv7、ARMv6、PPC64LE、S390X、RISC-V64 等所有 Alpine 3.20 支持的架构
 5. **构建优化**: 包含 .dockerignore 和构建缓存优化
 6. **错误处理**: 改进的构建错误处理和诊断
 
@@ -255,7 +266,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t my-kcptube .
 
 项目使用 GitHub Actions 进行多架构自动构建：
 
-- **统一多架构构建**: 使用 Docker buildx 在单个 job 中构建 AMD64 和 ARM64
+- **统一多架构构建**: 使用 Docker buildx 在单个 job 中构建 AMD64、ARM64、ARMv7、ARMv6、PPC64LE、S390X、RISC-V64 等全部 Alpine 3.20 支持的架构
 - **自动架构检测**: 用户拉取镜像时自动获取匹配的 CPU 架构版本  
 - **智能缓存策略**: 跨架构共享构建缓存，提高构建效率
 - **PR 优化构建**: Pull Request 仅构建 AMD64 以加快反馈速度

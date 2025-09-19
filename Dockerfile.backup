@@ -1,0 +1,3 @@
+FROM alpine:3.20
+RUN echo 'Test script multiarch build'
+ENTRYPOINT ["echo", "Hello from script multiarch"]

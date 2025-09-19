@@ -24,7 +24,7 @@ env:
 jobs:
 
   build-and-push:
-    name: 🏗️ 构建多架构镜像
+    name: 🏗️ 构建全平台多架构镜像
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request'
     permissions:
@@ -65,7 +65,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/ppc64le,linux/s390x,linux/riscv64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
