@@ -1,4 +1,4 @@
-name: 🚀 KCPTube Docker 构建
+name: KCPTube Docker CI
 
 on:
   push:
