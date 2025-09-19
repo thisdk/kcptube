@@ -42,7 +42,7 @@ RUN mkdir build && \
 FROM alpine:3.20
 
 # Install minimal runtime dependencies
-RUN apk add --no-cache \
+RUN apk add --no-cache tzdata \
         libgcc \
         libstdc++ \
     && rm -rf /var/cache/apk/*
