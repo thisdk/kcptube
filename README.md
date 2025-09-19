@@ -1,5 +1,6 @@
 # KCPTube Docker 镜像
 
+[![KCPTube Docker CI](https://github.com/thisdk/kcptube/actions/workflows/docker-build.yml/badge.svg)](https://github.com/thisdk/kcptube/actions/workflows/docker-build.yml)
 [![License](https://img.shields.io/github/license/thisdk/kcptube?logo=apache&logoColor=white)](https://github.com/thisdk/kcptube/blob/main/LICENSE)
 [![KCPTube Version](https://img.shields.io/badge/based_on-cnbatch/kcptube-blue?logo=github&logoColor=white)](https://github.com/cnbatch/kcptube)
 
