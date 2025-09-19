@@ -67,9 +67,6 @@ USER kcptube
 # Set working directory
 WORKDIR /etc/kcptube
 
-# Expose common ports (can be overridden)
-EXPOSE 3000-4000/udp
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD /usr/local/bin/kcptube /dev/null 2>&1 && exit 0 || exit 1
