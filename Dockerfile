@@ -3,9 +3,7 @@ FROM alpine:3.20 AS builder
 
 # Install essential build dependencies and Botan 3 packages
 RUN apk add --no-cache git build-base cmake asio-dev botan3-dev && rm -rf /var/cache/apk/* \
-    && ln -sf /usr/include/botan-3 /usr/include/botan \
-    && apk info -L botan3-dev | grep include \
-    && find /usr -name "*cipher_mode*" 2>/dev/null
+    && ln -sf usr/include/botan-3/botan /usr/include/botan
 
 # Create working directory
 WORKDIR /app
