@@ -9,12 +9,18 @@ set -e
 IMAGE_NAME="${1:-kcptube-local}"
 BUILD_STRATEGY="${BUILD_STRATEGY:-auto}"
 NO_CACHE="${NO_CACHE:-false}"
+MULTIARCH="${MULTIARCH:-false}"
+PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/ppc64le,linux/s390x,linux/riscv64}"
 
 echo "🚀 KCPTube Docker 镜像构建脚本"
 echo "================================="
 echo "镜像名称: $IMAGE_NAME"
 echo "构建策略: $BUILD_STRATEGY"
 echo "无缓存构建: $NO_CACHE"
+echo "多架构构建: $MULTIARCH"
+if [[ "$MULTIARCH" == "true" ]]; then
+    echo "目标平台: $PLATFORMS"
+fi
 echo ""
 
 # Function to show usage
@@ -24,12 +30,15 @@ show_usage() {
     echo "环境变量:"
     echo "  BUILD_STRATEGY=auto|fast|safe|debug"
     echo "  NO_CACHE=true|false"
+    echo "  MULTIARCH=true|false                # 启用多架构构建"
+    echo "  PLATFORMS=平台列表                  # 自定义构建平台"
     echo ""
     echo "示例:"
     echo "  $0                          # 使用默认设置"
     echo "  $0 my-kcptube              # 指定镜像名"
     echo "  BUILD_STRATEGY=fast $0      # 快速构建"
     echo "  NO_CACHE=true $0           # 无缓存构建"
+    echo "  MULTIARCH=true $0          # 多架构构建"
 }
 
 # Function to build with different strategies
@@ -60,28 +69,63 @@ build_image() {
             ;;
     esac
     
-    echo "执行构建命令: docker build ${docker_args[*]} -t $IMAGE_NAME ."
-    echo ""
-    
-    # Record build start time
-    BUILD_START=$(date +%s)
-    
-    # Build the image
-    if docker build "${docker_args[@]}" -t "$IMAGE_NAME" .; then
-        BUILD_END=$(date +%s)
-        BUILD_TIME=$((BUILD_END - BUILD_START))
+    # Choose build command based on multiarch setting
+    if [[ "$MULTIARCH" == "true" ]]; then
+        docker_args+=(--platform "$PLATFORMS")
+        echo "执行多架构构建命令: docker buildx build ${docker_args[*]} -t $IMAGE_NAME ."
+        echo "目标平台: $PLATFORMS"
         echo ""
-        echo "✅ 构建成功完成！"
-        echo "构建时间: ${BUILD_TIME}秒"
         
-        # Get image size
-        IMAGE_SIZE=$(docker images "$IMAGE_NAME" --format "table {{.Size}}" | tail -n +2)
-        echo "镜像大小: $IMAGE_SIZE"
-        return 0
+        # Check if buildx builder exists
+        if ! docker buildx ls | grep -q "multiarch"; then
+            echo "⚠️  未找到 multiarch 构建器，正在创建..."
+            docker buildx create --name multiarch --driver docker-container --use
+            echo "✅ multiarch 构建器创建成功"
+        else
+            docker buildx use multiarch
+        fi
+        
+        # Record build start time
+        BUILD_START=$(date +%s)
+        
+        # Build the image using buildx
+        if docker buildx build "${docker_args[@]}" -t "$IMAGE_NAME" .; then
+            BUILD_END=$(date +%s)
+            BUILD_TIME=$((BUILD_END - BUILD_START))
+            echo ""
+            echo "✅ 多架构构建成功完成！"
+            echo "构建时间: ${BUILD_TIME}秒"
+            echo "⚠️  注意: 多架构构建不会在本地存储完整镜像，只有 AMD64 版本在本地可用"
+            return 0
+        else
+            echo ""
+            echo "❌ 多架构构建失败"
+            return 1
+        fi
     else
+        echo "执行单架构构建命令: docker build ${docker_args[*]} -t $IMAGE_NAME ."
         echo ""
-        echo "❌ 构建失败"
-        return 1
+        
+        # Record build start time
+        BUILD_START=$(date +%s)
+        
+        # Build the image
+        if docker build "${docker_args[@]}" -t "$IMAGE_NAME" .; then
+            BUILD_END=$(date +%s)
+            BUILD_TIME=$((BUILD_END - BUILD_START))
+            echo ""
+            echo "✅ 构建成功完成！"
+            echo "构建时间: ${BUILD_TIME}秒"
+            
+            # Get image size
+            IMAGE_SIZE=$(docker images "$IMAGE_NAME" --format "table {{.Size}}" | tail -n +2)
+            echo "镜像大小: $IMAGE_SIZE"
+            return 0
+        else
+            echo ""
+            echo "❌ 构建失败"
+            return 1
+        fi
     fi
 }
 
