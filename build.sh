@@ -10,7 +10,7 @@ IMAGE_NAME="${1:-kcptube-local}"
 BUILD_STRATEGY="${BUILD_STRATEGY:-auto}"
 NO_CACHE="${NO_CACHE:-false}"
 MULTIARCH="${MULTIARCH:-false}"
-PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/ppc64le,linux/s390x,linux/riscv64}"
+PLATFORMS="${PLATFORMS:-linux/amd64,linux/arm64,linux/ppc64le,linux/s390x,linux/riscv64}"
 
 echo "🚀 KCPTube Docker 镜像构建脚本"
 echo "================================="
