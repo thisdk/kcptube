@@ -22,7 +22,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # 多架构构建 - 使用更简单和更可靠的单作业方式
+
   build-and-push:
     name: 🏗️ 构建多架构镜像
     runs-on: ubuntu-latest
@@ -73,7 +73,6 @@ jobs:
           cache-to: type=gha,mode=max
           no-cache: ${{ github.event.inputs.force_rebuild == 'true' }}
 
-  # AMD64 构建 - 仅用于 Pull Request 测试
   build-amd64-test:
     name: 🏗️ 构建 AMD64 镜像 (仅测试)
     runs-on: ubuntu-latest
