@@ -1,4 +1,4 @@
-name: 🚀 KCPTube 多架构 Docker 镜像构建
+name: 🚀 KCPTube Docker 构建
 
 on:
   push:
