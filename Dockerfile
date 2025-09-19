@@ -2,7 +2,8 @@
 FROM alpine:3.20 AS builder
 
 # Install essential build dependencies and Botan 3 packages
-RUN apk add --no-cache git build-base cmake asio-dev botan3-dev && rm -rf /var/cache/apk/*
+RUN apk add --no-cache git build-base cmake asio-dev botan3-dev && rm -rf /var/cache/apk/* \
+    ln -sf /usr/local/include/botan-3/botan /usr/local/include/botan
 
 # Create working directory
 WORKDIR /app
