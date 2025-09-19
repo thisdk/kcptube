@@ -1,25 +1,9 @@
 # Multi-stage build for kcptube
 FROM alpine:3.20 AS builder
 
-# Install essential build dependencies including Python for Botan
-RUN apk add --no-cache \
-        build-base \
-        cmake \
-        git \
-        python3 \
-        asio-dev \
-        pkgconfig \
+# Install essential build dependencies and Botan 3 packages
+RUN apk add --no-cache git build-base cmake asio botan3-libs \
     && rm -rf /var/cache/apk/*
-
-# Build and install Botan 3 from source (minimal build)
-RUN cd /tmp && \
-    git clone --depth 1 --branch 3.6.1 https://github.com/randombit/botan.git && \
-    cd botan && \
-    python3 configure.py --minimized-build --enable-modules=aead,aes,gcm,ocb,chacha20poly1305,sha3,crc32 --disable-shared --prefix=/usr/local && \
-    make -j$(nproc) && \
-    make install && \
-    ln -sf /usr/local/include/botan-3/botan /usr/local/include/botan && \
-    cd / && rm -rf /tmp/botan
 
 # Create working directory
 WORKDIR /app
@@ -28,24 +12,15 @@ WORKDIR /app
 RUN git clone https://github.com/cnbatch/kcptube.git . && \
     git submodule update --init --recursive
 
-# Build the application with error handling
-RUN mkdir build && \
-    cd build && \
-    PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" \
-    cmake -DCMAKE_PREFIX_PATH=/usr/local .. && \
-    make -j$(nproc) && \
-    ls -la kcptube && \
-    file kcptube && \
-    ldd kcptube || true
+# Build the application with dynamic Botan linking
+RUN mkdir build && cd build && cmake .. && make -j$(nproc) && \
+    ls -la kcptube && file kcptube && ldd kcptube || true
 
 # Runtime stage
 FROM alpine:3.20
 
-# Install minimal runtime dependencies
-RUN apk add --no-cache tzdata \
-        libgcc \
-        libstdc++ \
-    && rm -rf /var/cache/apk/*
+# Install runtime dependencies including Botan 3 libraries
+RUN apk add --no-cache tzdata botan3-libs && rm -rf /var/cache/apk/*
 
 # Create non-root user
 RUN addgroup -g 1000 kcptube && \
